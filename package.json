@@ -1,0 +1,14 @@
+{
+  "name": "online-notebook",
+  "version": "1.0.0",
+  "description": "一个功能完整的在线记事本应用",
+  "scripts": {
+    "dev": "npx serve ."
+  },
+  "keywords": ["notebook", "notes", "productivity"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "serve": "^14.0.0"
+  }
+}
