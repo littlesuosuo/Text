@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线记事本</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 95vh;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: white;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        header h1 {
+            font-size: 2.4rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background-color: #f8fafc;
+            border-right: 1px solid #eaeaea;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .note-editor {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .search-box {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 14px 18px 14px 48px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: white;
+            transition: all 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #6a11cb;
+            box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+        }
+        
+        .notes-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .note-item {
+            background-color: white;
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .note-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+            border-color: #c5d5ff;
+        }
+        
+        .note-item.active {
+            border-color: #6a11cb;
+            background-color: #f8f5ff;
+        }
+        
+        .note-item h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .note-item .preview {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .note-item .date {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .note-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid #eaeaea;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #6a11cb;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5809b5;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(106, 17, 203, 0.2);
+        }
+        
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+        }
+        
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .editor-header h2 {
+            font-size: 1.8rem;
+            color: #333;
+        }
+        
+        .editor-tools {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .tool-btn {
+            background-color: #f1f5f9;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #475569;
+            transition: all 0.3s;
+        }
+        
+        .tool-btn:hover {
+            background-color: #e2e8f0;
+            color: #6a11cb;
+        }
+        
+        .editor-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        #noteTitle {
+            padding: 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #f8fafc;
+        }
+        
+        #noteTitle:focus {
+            outline: none;
+            border-color: #6a11cb;
+            background-color: white;
+        }
+        
+        #noteContent {
+            flex: 1;
+            padding: 20px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: none;
+            background-color: #f8fafc;
+        }
+        
+        #noteContent:focus {
+            outline: none;
+            border-color: #6a11cb;
+            background-color: white;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #94a3b8;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #64748b;
+        }
+        
+        .empty-state p {
+            max-width: 400px;
+            line-height: 1.6;
+        }
+        
+        .delete-confirm {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .delete-confirm.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .confirm-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+        }
+        
+        .delete-confirm.active .confirm-box {
+            transform: translateY(0);
+        }
+        
+        .confirm-box h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .confirm-box p {
+            color: #666;
+            margin-bottom: 25px;
+        }
+        
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #eaeaea;
+                max-height: 300px;
+            }
+            
+            .container {
+                height: auto;
+                min-height: 95vh;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 0;
+            }
+            
+            body {
+                padding: 10px;
+            }
+            
+            .note-editor, .sidebar {
+                padding: 20px;
+            }
+            
+            .editor-tools {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-book"></i> 在线记事本</h1>
+            <p>随时随地记录您的想法和待办事项</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="搜索笔记...">
+                </div>
+                
+                <div class="notes-list" id="notesList">
+                    <!-- 笔记列表将通过JavaScript动态生成 -->
+                </div>
+                
+                <div class="note-actions">
+                    <button class="btn btn-primary" id="newNoteBtn">
+                        <i class="fas fa-plus"></i> 新建笔记
+                    </button>
+                    <button class="btn btn-secondary" id="deleteAllBtn">
+                        <i class="fas fa-trash"></i> 清空全部
+                    </button>
+                </div>
+            </div>
+            
+            <div class="note-editor">
+                <div class="editor-header">
+                    <h2 id="editorTitle">选择或创建笔记</h2>
+                    <div class="editor-tools">
+                        <button class="tool-btn" id="boldBtn" title="加粗">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button class="tool-btn" id="italicBtn" title="斜体">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button class="tool-btn" id="underlineBtn" title="下划线">
+                            <i class="fas fa-underline"></i>
+                        </button>
+                        <button class="tool-btn" id="saveNoteBtn" title="保存">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button class="tool-btn" id="deleteNoteBtn" title="删除当前笔记">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="editor-body">
+                    <input type="text" id="noteTitle" placeholder="笔记标题">
+                    <textarea id="noteContent" placeholder="开始编写您的内容..."></textarea>
+                    <div class="stats">
+                        <div id="wordCount">字数: 0</div>
+                        <div id="lastSaved">最后保存: 从未保存</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 删除确认对话框 -->
+    <div class="delete-confirm" id="deleteConfirm">
+        <div class="confirm-box">
+            <h3>确认删除</h3>
+            <p>您确定要删除这个笔记吗？此操作无法撤销。</p>
+            <div class="confirm-buttons">
+                <button class="btn btn-secondary" id="cancelDelete">取消</button>
+                <button class="btn btn-danger" id="confirmDelete">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 笔记数据
+        let notes = [];
+        let currentNoteId = null;
+        let deleteNoteId = null;
+        
+        // DOM元素
+        const notesListEl = document.getElementById('notesList');
+        const noteTitleEl = document.getElementById('noteTitle');
+        const noteContentEl = document.getElementById('noteContent');
+        const newNoteBtn = document.getElementById('newNoteBtn');
+        const saveNoteBtn = document.getElementById('saveNoteBtn');
+        const deleteNoteBtn = document.getElementById('deleteNoteBtn');
+        const deleteAllBtn = document.getElementById('deleteAllBtn');
+        const searchInput = document.getElementById('searchInput');
+        const wordCountEl = document.getElementById('wordCount');
+        const lastSavedEl = document.getElementById('lastSaved');
+        const deleteConfirmEl = document.getElementById('deleteConfirm');
+        const cancelDeleteBtn = document.getElementById('cancelDelete');
+        const confirmDeleteBtn = document.getElementById('confirmDelete');
+        const boldBtn = document.getElementById('boldBtn');
+        const italicBtn = document.getElementById('italicBtn');
+        const underlineBtn = document.getElementById('underlineBtn');
+        
+        // 从本地存储加载笔记
+        function loadNotes() {
+            const savedNotes = localStorage.getItem('notebook-notes');
+            if (savedNotes) {
+                notes = JSON.parse(savedNotes);
+            } else {
+                // 默认示例笔记
+                notes = [
+                    {
+                        id: 1,
+                        title: '欢迎使用在线记事本',
+                        content: '这是一个功能完整的在线记事本应用。\n\n您可以：\n• 创建新笔记\n• 编辑现有笔记\n• 删除不需要的笔记\n• 搜索特定笔记\n• 所有笔记会自动保存到浏览器\n\n开始记录您的想法吧！',
+                        date: new Date().toISOString(),
+                        lastModified: new Date().toISOString()
+                    },
+                    {
+                        id: 2,
+                        title: '购物清单',
+                        content: '本周需要购买：\n\n1. 牛奶\n2. 鸡蛋\n3. 面包\n4. 水果（苹果、香蕉）\n5. 蔬菜（西红柿、黄瓜）\n6. 鸡肉\n7. 咖啡',
+                        date: new Date(Date.now() - 86400000).toISOString(),
+                        lastModified: new Date(Date.now() - 86400000).toISOString()
+                    },
+                    {
+                        id: 3,
+                        title: '项目计划',
+                        content: '第一季度项目计划：\n\n- 完成需求分析 (1月15日前)\n- 设计UI界面 (1月30日前)\n- 开发核心功能 (2月28日前)\n- 测试与调试 (3月15日前)\n- 上线部署 (3月31日前)\n\n注意事项：\n• 每周召开进度会议\n• 及时同步遇到的问题\n• 确保代码质量',
+                        date: new Date(Date.now() - 172800000).toISOString(),
+                        lastModified: new Date(Date.now() - 172800000).toISOString()
+                    }
+                ];
+                saveNotes();
+            }
+            renderNotes();
+        }
+        
+        // 保存笔记到本地存储
+        function saveNotes() {
+            localStorage.setItem('notebook-notes', JSON.stringify(notes));
+        }
+        
+        // 生成唯一ID
+        function generateId() {
+            return Date.now();
+        }
+        
+        // 渲染笔记列表
+        function renderNotes(filter = '') {
+            notesListEl.innerHTML = '';
+            
+            let filteredNotes = notes;
+            if (filter) {
+                const searchTerm = filter.toLowerCase();
+                filteredNotes = notes.filter(note => 
+                    note.title.toLowerCase().includes(searchTerm) || 
+                    note.content.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (filteredNotes.length === 0) {
+                if (filter) {
+                    notesListEl.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到笔记</h3>
+                            <p>没有找到包含"${filter}"的笔记</p>
+                        </div>
+                    `;
+                } else {
+                    notesListEl.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-sticky-note"></i>
+                            <h3>还没有笔记</h3>
+                            <p>点击"新建笔记"按钮开始记录</p>
+                        </div>
+                    `;
+                }
+                return;
+            }
+            
+            filteredNotes.forEach(note => {
+                const noteEl = document.createElement('div');
+                noteEl.className = 'note-item';
+                if (note.id === currentNoteId) {
+                    noteEl.classList.add('active');
+                }
+                
+                // 创建预览内容（限制长度）
+                const preview = note.content.length > 100 
+                    ? note.content.substring(0, 100) + '...' 
+                    : note.content;
+                
+                const date = new Date(note.date);
+                const formattedDate = date.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                noteEl.innerHTML = `
+                    <h3>${note.title || '无标题'}</h3>
+                    <div class="preview">${preview}</div>
+                    <div class="date">
+                        <i class="far fa-calendar"></i>
+                        ${formattedDate}
+                    </div>
+                `;
+                
+                noteEl.addEventListener('click', () => selectNote(note.id));
+                notesListEl.appendChild(noteEl);
+            });
+        }
+        
+        // 选择笔记进行编辑
+        function selectNote(id) {
+            const note = notes.find(note => note.id === id);
+            if (!note) return;
+            
+            currentNoteId = id;
+            noteTitleEl.value = note.title;
+            noteContentEl.value = note.content;
+            
+            // 更新编辑器标题
+            document.getElementById('editorTitle').textContent = '编辑笔记';
+            
+            // 更新UI
+            renderNotes(searchInput.value);
+            updateWordCount();
+            updateLastSaved(note.lastModified);
+        }
+        
+        // 创建新笔记
+        function createNewNote() {
+            currentNoteId = generateId();
+            noteTitleEl.value = '';
+            noteContentEl.value = '';
+            
+            // 更新编辑器标题
+            document.getElementById('editorTitle').textContent = '新建笔记';
+            
+            // 更新UI
+            renderNotes(searchInput.value);
+            updateWordCount();
+            noteTitleEl.focus();
+        }
+        
+        // 保存当前笔记
+        function saveCurrentNote() {
+            const title = noteTitleEl.value.trim();
+            const content = noteContentEl.value.trim();
+            
+            if (!title && !content) {
+                alert('笔记不能为空！');
+                return;
+            }
+            
+            const now = new Date().toISOString();
+            const existingNoteIndex = notes.findIndex(note => note.id === currentNoteId);
+            
+            if (existingNoteIndex !== -1) {
+                // 更新现有笔记
+                notes[existingNoteIndex].title = title || '无标题';
+                notes[existingNoteIndex].content = content;
+                notes[existingNoteIndex].lastModified = now;
+            } else {
+                // 创建新笔记
+                const newNote = {
+                    id: currentNoteId,
+                    title: title || '无标题',
+                    content: content,
+                    date: now,
+                    lastModified: now
+                };
+                notes.unshift(newNote);
+            }
+            
+            saveNotes();
+            renderNotes(searchInput.value);
+            updateLastSaved(now);
+            
+            // 短暂显示保存成功反馈
+            const originalText = saveNoteBtn.innerHTML;
+            saveNoteBtn.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => {
+                saveNoteBtn.innerHTML = originalText;
+            }, 1000);
+        }
+        
+        // 删除笔记
+        function deleteNote(id) {
+            deleteNoteId = id;
+            deleteConfirmEl.classList.add('active');
+        }
+        
+        // 确认删除笔记
+        function confirmDeleteNote() {
+            if (deleteNoteId) {
+                notes = notes.filter(note => note.id !== deleteNoteId);
+                saveNotes();
+                
+                if (currentNoteId === deleteNoteId) {
+                    currentNoteId = null;
+                    noteTitleEl.value = '';
+                    noteContentEl.value = '';
+                    document.getElementById('editorTitle').textContent = '选择或创建笔记';
+                }
+                
+                renderNotes(searchInput.value);
+                updateWordCount();
+            }
+            
+            deleteConfirmEl.classList.remove('active');
+            deleteNoteId = null;
+        }
+        
+        // 删除所有笔记
+        function deleteAllNotes() {
+            if (notes.length === 0) return;
+            
+            if (confirm('确定要删除所有笔记吗？此操作无法撤销。')) {
+                notes = [];
+                currentNoteId = null;
+                noteTitleEl.value = '';
+                noteContentEl.value = '';
+                document.getElementById('editorTitle').textContent = '选择或创建笔记';
+                
+                saveNotes();
+                renderNotes();
+                updateWordCount();
+            }
+        }
+        
+        // 更新字数统计
+        function updateWordCount() {
+            const content = noteContentEl.value;
+            const words = content.trim().length;
+            wordCountEl.textContent = `字数: ${words}`;
+        }
+        
+        // 更新最后保存时间
+        function updateLastSaved(timestamp) {
+            if (!timestamp) {
+                lastSavedEl.textContent = '最后保存: 从未保存';
+                return;
+            }
+            
+            const date = new Date(timestamp);
+            const formattedTime = date.toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            const formattedDate = date.toLocaleDateString('zh-CN', {
+                month: 'short',
+                day: 'numeric'
+            });
+            
+            lastSavedEl.textContent = `最后保存: ${formattedDate} ${formattedTime}`;
+        }
+        
+        // 文本格式工具
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            noteContentEl.focus();
+        }
+        
+        // 事件监听器
+        newNoteBtn.addEventListener('click', createNewNote);
+        saveNoteBtn.addEventListener('click', saveCurrentNote);
+        deleteNoteBtn.addEventListener('click', () => {
+            if (currentNoteId) {
+                deleteNote(currentNoteId);
+            } else {
+                alert('请先选择一个笔记');
+            }
+        });
+        deleteAllBtn.addEventListener('click', deleteAllNotes);
+        cancelDeleteBtn.addEventListener('click', () => {
+            deleteConfirmEl.classList.remove('active');
+            deleteNoteId = null;
+        });
+        confirmDeleteBtn.addEventListener('click', confirmDeleteNote);
+        
+        noteContentEl.addEventListener('input', updateWordCount);
+        noteTitleEl.addEventListener('input', updateWordCount);
+        
+        searchInput.addEventListener('input', (e) => {
+            renderNotes(e.target.value);
+        });
+        
+        // 文本格式按钮
+        boldBtn.addEventListener('click', () => formatText('bold'));
+        italicBtn.addEventListener('click', () => formatText('italic'));
+        underlineBtn.addEventListener('click', () => formatText('underline'));
+        
+        // 自动保存功能
+        let autoSaveTimer;
+        noteTitleEl.addEventListener('input', () => {
+            clearTimeout(autoSaveTimer);
+            if (currentNoteId) {
+                autoSaveTimer = setTimeout(saveCurrentNote, 2000);
+            }
+        });
+        
+        noteContentEl.addEventListener('input', () => {
+            clearTimeout(autoSaveTimer);
+            if (currentNoteId) {
+                autoSaveTimer = setTimeout(saveCurrentNote, 2000);
+            }
+        });
+        
+        // 初始化应用
+        loadNotes();
+        
+        // 如果没有当前选中的笔记，选中第一个笔记
+        if (notes.length > 0 && !currentNoteId) {
+            selectNote(notes[0].id);
+        }
+        
+        // 添加键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + S 保存
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveCurrentNote();
+            }
+            
+            // Ctrl/Cmd + N 新建笔记
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                createNewNote();
+            }
+            
+            // Ctrl/Cmd + F 聚焦搜索框
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>
